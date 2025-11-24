@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Feedback{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Submit Feedback</h2>
+
+<div class="form-card">
+
+    <label>Recycler ID</label>
+    <input id="recyclerId" placeholder="Enter recycler ID" required>
+
+    <label>Rating (1–5)</label>
+    <select id="rating">
+        <option>1</option>
+        <option>2</option>
+        <option>3</option>
+        <option>4</option>
+        <option selected>5</option>
+    </select>
+
+    <label>Comments</label>
+    <textarea id="comments" placeholder="Write your feedback..."></textarea>
+
+    <button class="btn" onclick="sendFeedback()">Submit</button>
+
+</div>
+
+<script>
+async function sendFeedback() {
+
+    const token = localStorage.getItem("token");
+
+    const body = {
+        recycler_id: document.getElementById("recyclerId").value,
+        rating: document.getElementById("rating").value,
+        comments: document.getElementById("comments").value,
+    };
+
+    const res = await fetch("/user/feedback", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        alert("Feedback submitted!");
+        window.location.href = "/user/dashboard";
+    } else {
+        alert(data.error || "Something went wrong");
+    }
+}
+</script>
+
+{% endblock %}

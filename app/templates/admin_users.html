@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}All Users{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Registered Users</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>User ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+        </tr>
+    </thead>
+
+    <tbody id="usersTableBody">
+        <!-- Data loads here -->
+    </tbody>
+</table>
+
+<script>
+async function loadUsers() {
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role !== "admin") {
+        alert("Unauthorized! Please login again.");
+        window.location.href = "/auth/login";
+        return;
+    }
+
+    const res = await fetch("/admin/users", {
+        method: "GET",
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        alert("Failed to load users");
+        return;
+    }
+
+    let rows = "";
+
+    data.users.forEach(user => {
+        rows += `
+            <tr>
+                <td>${user._id}</td>
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td>${user.role}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("usersTableBody").innerHTML = rows;
+}
+
+loadUsers();
+</script>
+
+{% endblock %}

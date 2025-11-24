@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Add Recycler{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Add Recycler</h2>
+
+<div class="form-card">
+
+    <label>Name:</label>
+    <input type="text" id="name" placeholder="Recycler Name" required>
+
+    <label>Email:</label>
+    <input type="email" id="email" placeholder="Recycler Email" required>
+
+    <label>Password:</label>
+    <input type="password" id="password" placeholder="Password" required>
+
+    <button class="btn eco-btn" onclick="addRecycler()">Add Recycler</button>
+</div>
+
+<script>
+async function addRecycler() {
+
+    const token = localStorage.getItem("token");
+
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch("/admin/add-recycler", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            name,
+            email,
+            password
+        })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        alert("Recycler added successfully!");
+        window.location.href = "/admin/recyclers-page";
+    } else {
+        alert(data.error);
+    }
+}
+</script>
+
+{% endblock %}

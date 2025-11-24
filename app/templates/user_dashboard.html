@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}User Dashboard{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">User Dashboard</h2>
+
+<div class="dashboard-cards">
+
+    <div class="card">
+        <h3>Total Items</h3>
+        <p id="itemsCount">0</p>
+        <a href="/user/my-items-page" class="btn">View Items</a>
+    </div>
+
+    <div class="card">
+        <h3>Total Requests</h3>
+        <p id="requestsCount">0</p>
+        <a href="/user/my-requests-page" class="btn">View Requests</a>
+    </div>
+
+</div>
+
+<script>
+async function loadUserData() {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/user/dashboard-data", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        alert("Login again");
+        window.location.href = "/auth/login";
+        return;
+    }
+
+    document.getElementById("itemsCount").innerText = data.items_count;
+    document.getElementById("requestsCount").innerText = data.requests_count;
+}
+
+loadUserData();
+</script>
+
+{% endblock %}

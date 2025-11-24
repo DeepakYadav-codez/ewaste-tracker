@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Add Item{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Add E-Waste Item</h2>
+
+<div class="form-card">
+
+    <label>Item Name</label>
+    <input id="itemName" placeholder="Enter item name">
+
+    <label>Category</label>
+    <select id="category">
+        <option>Select Category</option>
+        <option>Mobile</option>
+        <option>Laptop</option>
+        <option>Television</option>
+        <option>Battery</option>
+        <option>Other</option>
+    </select>
+
+    <label>Description</label>
+    <textarea id="description" placeholder="About item"></textarea>
+
+    <button class="btn" onclick="addItem()">Add Item</button>
+
+</div>
+
+<script>
+async function addItem() {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/user/add-item", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            itemName: document.getElementById("itemName").value,
+            category: document.getElementById("category").value,
+            description: document.getElementById("description").value
+        })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        alert("Item added successfully!");
+        window.location.href = "/user/my-items-page";
+    } else {
+        alert(data.error);
+    }
+}
+</script>
+
+{% endblock %}

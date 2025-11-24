@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Recycler Dashboard{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Recycler Dashboard</h2>
+
+<div class="dashboard-cards">
+
+    <div class="card">
+        <h3>Pending Requests</h3>
+        <p id="pendingCount">0</p>
+        <a href="/recycler/pending" class="btn">View Pending</a>
+    </div>
+
+    <div class="card">
+        <h3>Assigned Requests</h3>
+        <p id="assignedCount">0</p>
+        <a href="/recycler/assigned" class="btn">View Assigned</a>
+    </div>
+
+</div>
+
+<script>
+async function loadRecyclerData() {
+    const token = localStorage.getItem("token");
+
+    const resPending = await fetch("/recycler/pending-data", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    const pendingData = await resPending.json();
+
+    const resAssigned = await fetch("/recycler/assigned-data", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    const assignedData = await resAssigned.json();
+
+    document.getElementById("pendingCount").innerText = pendingData.pending.length;
+    document.getElementById("assignedCount").innerText = assignedData.assigned.length;
+}
+
+loadRecyclerData();
+</script>
+
+{% endblock %}

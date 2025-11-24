@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}All Requests{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">All Pickup Requests</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Request ID</th>
+            <th>User ID</th>
+            <th>Item ID</th>
+            <th>Address</th>
+            <th>Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody id="requestsTableBody">
+        <!-- Data loads here -->
+    </tbody>
+</table>
+
+<script>
+async function loadRequests() {
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role !== "admin") {
+        alert("Unauthorized! Please login again.");
+        window.location.href = "/auth/login";
+        return;
+    }
+
+    const res = await fetch("/admin/requests", {
+        method: "GET",
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    let rows = "";
+
+    data.requests.forEach(req => {
+        rows += `
+            <tr>
+                <td>${req._id}</td>
+                <td>${req.user_id}</td>
+                <td>${req.item_id}</td>
+                <td>${req.address}</td>
+                <td>${req.date}</td>
+                <td>${req.status}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("requestsTableBody").innerHTML = rows;
+}
+
+loadRequests();
+</script>
+
+{% endblock %}

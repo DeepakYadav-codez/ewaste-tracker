@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Pending Requests{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Pending Pickup Requests</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Request ID</th>
+            <th>User ID</th>
+            <th>Item ID</th>
+            <th>Address</th>
+            <th>Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <tbody id="pendingTable">
+        <!-- Requests load here -->
+    </tbody>
+</table>
+
+
+<script>
+async function loadPending() {
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/recycler/pending-data", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    let rows = "";
+
+    data.pending.forEach(r => {
+        rows += `
+        <tr>
+            <td>${r._id}</td>
+            <td>${r.user_id}</td>
+            <td>${r.item_id}</td>
+            <td>${r.address}</td>
+            <td>${r.date}</td>
+            <td>
+                <button class="btn" onclick="acceptRequest('${r._id}')">Accept</button>
+            </td>
+        </tr>`;
+    });
+
+    document.getElementById("pendingTable").innerHTML = rows;
+}
+
+
+async function acceptRequest(id) {
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`/recycler/accept-request/${id}`, {
+        method: "PUT",
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        alert("Request Assigned Successfully!");
+        window.location.reload();
+    } else {
+        alert(data.error);
+    }
+}
+
+loadPending();
+</script>
+
+{% endblock %}

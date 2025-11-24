@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}All Recyclers{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Registered Recyclers</h2>
+
+<a href="/admin/add-recycler-page" class="btn eco-btn" style="margin-bottom: 15px;">Add New Recycler</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Recycler ID</th>
+            <th>Name</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+
+    <tbody id="recyclersTableBody">
+        <!-- Data loads here -->
+    </tbody>
+</table>
+
+<script>
+async function loadRecyclers() {
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role !== "admin") {
+        alert("Unauthorized! Please login again.");
+        window.location.href = "/auth/login";
+        return;
+    }
+
+    const res = await fetch("/admin/recyclers", {
+        method: "GET",
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    let rows = "";
+
+    data.recyclers.forEach(rec => {
+        rows += `
+            <tr>
+                <td>${rec._id}</td>
+                <td>${rec.name}</td>
+                <td>${rec.email}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("recyclersTableBody").innerHTML = rows;
+}
+
+loadRecyclers();
+</script>
+
+{% endblock %}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}E-Waste Tracker{% endblock %}</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <img src="/static/images/logo.png" class="nav-logo">
+            <span class="nav-title">E-Waste Tracker</span>
+        </div>
+
+        <ul class="nav-links" id="navLinks">
+            <!-- Links inserted by JS -->
+        </ul>
+
+        <button class="nav-btn" onclick="logout()">Logout</button>
+    </nav>
+
+    <!-- =============== MAIN CONTENT (LEFT ALIGNED) =============== -->
+    <main class="content-left">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        const role = localStorage.getItem("role");
+        const nav = document.getElementById("navLinks");
+
+        /* ---------- USER NAVBAR ---------- */
+        if (role === "user") {
+            nav.innerHTML = `
+                <li><a href="/user/dashboard">Dashboard</a></li>
+                <li><a href="/user/add-item-page">Add Item</a></li>
+                <li><a href="/user/my-items-page">My Items</a></li>
+                <li><a href="/user/my-requests-page">My Requests</a></li>
+            `;
+        }
+
+        /* ---------- RECYCLER NAVBAR ---------- */
+        if (role === "recycler") {
+            nav.innerHTML = `
+                <li><a href="/recycler/dashboard">Dashboard</a></li>
+                <li><a href="/recycler/pending">Pending</a></li>
+                <li><a href="/recycler/assigned">Assigned</a></li>
+            `;
+        }
+
+        /* ---------- ADMIN NAVBAR ---------- */
+        if (role === "admin") {
+            nav.innerHTML = `
+                <li><a href="/admin/dashboard">Dashboard</a></li>
+                <li><a href="/admin/users">Users</a></li>
+                <li><a href="/admin/recyclers">Recyclers</a></li>
+                <li><a href="/admin/requests">Requests</a></li>
+            `;
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/auth/login";
+        }
+    </script>
+
+</body>
+</html>

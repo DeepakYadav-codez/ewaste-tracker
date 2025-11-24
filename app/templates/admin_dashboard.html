@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Admin Dashboard</h2>
+
+<div class="dashboard-cards">
+
+    <div class="card">
+        <h3>Total Users</h3>
+        <p id="usersCount">0</p>
+        <a href="/admin/users" class="btn">View Users</a>
+    </div>
+
+    <div class="card">
+        <h3>Assign Requests</h3>
+        <a href="/admin/assign-page" class="btn eco-btn">Assign Now</a>
+    </div>
+
+
+    <div class="card">
+        <h3>Total Recyclers</h3>
+        <p id="recyclersCount">0</p>
+        <a href="/admin/recyclers" class="btn">View Recyclers</a>
+    </div>
+
+    <div class="card">
+        <h3>Total Requests</h3>
+        <p id="requestsCount">0</p>
+        <a href="/admin/requests" class="btn">View Requests</a>
+    </div>
+
+</div>
+
+<script>
+async function loadAdmin() {
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/admin/dashboard-data", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        alert("Login again");
+        window.location.href = "/auth/login";
+        return;
+    }
+
+    document.getElementById("usersCount").innerText = data.total_users;
+    document.getElementById("recyclersCount").innerText = data.total_recyclers;
+    document.getElementById("requestsCount").innerText = data.total_requests;
+}
+
+loadAdmin();
+</script>
+
+{% endblock %}

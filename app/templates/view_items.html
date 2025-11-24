@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}My Items{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">My Items</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Request Pickup</th>
+        </tr>
+    </thead>
+
+    <tbody id="itemsTable">
+    </tbody>
+</table>
+
+<script>
+async function loadItems() {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/user/my-items", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    let rows = "";
+
+    data.items.forEach(i => {
+        rows += `
+        <tr>
+            <td>${i.itemName}</td>
+            <td>${i.category}</td>
+            <td>${i.description}</td>
+            <td>${i.status}</td>
+            <td>
+                <a class="btn" href="/user/request-pickup-page?item_id=${i._id}">
+                    Request
+                </a>
+            </td>
+        </tr>`;
+    });
+
+    document.getElementById("itemsTable").innerHTML = rows;
+}
+
+loadItems();
+</script>
+
+{% endblock %}

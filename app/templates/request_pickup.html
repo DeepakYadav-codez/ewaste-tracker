@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Request Pickup{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Request Pickup</h2>
+
+<div class="form-card">
+
+    <label>Pickup Address</label>
+    <textarea id="address"></textarea>
+
+    <label>Date</label>
+    <input type="date" id="date">
+
+    <button class="btn" onclick="submitPickup()">Submit</button>
+
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const itemId = params.get("item_id");
+
+async function submitPickup() {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/user/request-pickup", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            address: document.getElementById("address").value,
+            date: document.getElementById("date").value
+        })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        alert("Pickup Request Sent!");
+        window.location.href = "/user/my-requests-page";
+    } else {
+        alert(data.error);
+    }
+}
+</script>
+
+{% endblock %}

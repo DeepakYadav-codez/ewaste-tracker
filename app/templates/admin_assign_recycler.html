@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Assign Recycler{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">Assign Recycler to Requests</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>User ID</th>
+            <th>Item ID</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <tbody id="requestTable"></tbody>
+</table>
+
+<!-- Modal -->
+<div id="assignModal" class="modal">
+    <div class="modal-content">
+        <h3>Select Recycler</h3>
+        <select id="recyclerDropdown"></select>
+
+        <div class="modal-buttons">
+            <button class="btn eco-btn" onclick="assignNow()">Assign</button>
+            <button class="btn" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedRequestId = "";
+
+async function loadRequests() {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/admin/requests", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+    let rows = "";
+
+    data.requests.forEach(r => {
+        if (r.status === "Pending") {
+            rows += `
+            <tr>
+                <td>${r.user_id}</td>
+                <td>${r.item_id}</td>
+                <td>${r.address}</td>
+                <td>${r.status}</td>
+                <td>
+                    <button class="btn eco-btn" onclick="openModal('${r._id}')">
+                        Assign
+                    </button>
+                </td>
+            </tr>`;
+        }
+    });
+
+    document.getElementById("requestTable").innerHTML = rows;
+}
+
+async function openModal(requestId) {
+    selectedRequestId = requestId;
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/admin/recyclers", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    let options = "";
+    data.recyclers.forEach(r => {
+        options += `<option value="${r._id}">${r.name}</option>`;
+    });
+
+    document.getElementById("recyclerDropdown").innerHTML = options;
+    document.getElementById("assignModal").style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("assignModal").style.display = "none";
+}
+
+async function assignNow() {
+    const token = localStorage.getItem("token");
+    const recyclerId = document.getElementById("recyclerDropdown").value;
+
+    const res = await fetch("/admin/assign-recycler", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            request_id: selectedRequestId,
+            recycler_id: recyclerId
+        })
+    });
+
+    if (res.ok) {
+        alert("Recycler Assigned Successfully!");
+        closeModal();
+        loadRequests();
+    } else {
+        alert("Failed to assign recycler.");
+    }
+}
+
+loadRequests();
+</script>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Feedback{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">All Feedback</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>User ID</th>
+            <th>Recycler ID</th>
+            <th>Rating</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+
+    <tbody id="feedbackTable"></tbody>
+</table>
+
+<script>
+async function loadFeedback() {
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/admin/feedback", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    let rows = "";
+
+    data.feedbacks.forEach(f => {
+        rows += `
+        <tr>
+            <td>${f.user_id}</td>
+            <td>${f.recycler_id}</td>
+            <td>${f.rating}</td>
+            <td>${f.comments}</td>
+        </tr>`;
+    });
+
+    document.getElementById("feedbackTable").innerHTML = rows;
+}
+
+loadFeedback();
+</script>
+
+{% endblock %}

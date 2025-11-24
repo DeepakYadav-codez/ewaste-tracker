@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}My Requests{% endblock %}
+
+{% block content %}
+
+<h2 class="dashboard-header">My Pickup Requests</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Item ID</th>
+            <th>Address</th>
+            <th>Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody id="reqTable"></tbody>
+</table>
+
+<script>
+async function loadRequests() {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/user/my-requests", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    let rows = "";
+
+    data.requests.forEach(r => {
+        rows += `
+        <tr>
+            <td>${r.item_id}</td>
+            <td>${r.address}</td>
+            <td>${r.date}</td>
+            <td>${r.status}</td>
+        </tr>`;
+    });
+
+    document.getElementById("reqTable").innerHTML = rows;
+}
+
+loadRequests();
+</script>
+
+{% endblock %}
