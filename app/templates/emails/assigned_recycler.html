@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial; background:#f7f7f7; padding:20px;">
+  <div style="max-width:600px; background:white; padding:20px; border-radius:10px;">
+    <h2 style="color:#2c7a7b;">New Pickup Assigned</h2>
+
+    <p>Hello {{ recycler_name }},</p>
+
+    <p>A new pickup request has been assigned to you.</p>
+
+    <p><b>Item:</b> {{ item_name }}</p>
+    <p><b>User:</b> {{ user_name }}</p>
+    <p><b>Address:</b> {{ address }}</p>
+    <p><b>Date:</b> {{ date }}</p>
+
+    <br>
+    <a href="https://yourapp.com/recycler/dashboard"
+       style="background:#2c7a7b; padding:10px 18px; color:white; text-decoration:none; border-radius:6px;">
+       Go to Dashboard
+    </a>
+
+    <br><br>
+    <p>Regards, <br>E-Waste Tracker Team</p>
+  </div>
+</body>
+</html>

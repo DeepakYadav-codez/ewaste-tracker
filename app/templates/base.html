@@ -8,24 +8,23 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
-<body>
+<body id="body">
 
     <!-- ================= NAVBAR ================= -->
-    <nav class="navbar">
+    <nav class="navbar" id="navbar">
         <div class="nav-left">
             <img src="/static/images/logo.png" class="nav-logo">
             <span class="nav-title">E-Waste Tracker</span>
         </div>
 
-        <ul class="nav-links" id="navLinks">
-            <!-- Links inserted by JS -->
-        </ul>
+        <ul class="nav-links" id="navLinks"></ul>
 
+        <button id="darkToggle" class="nav-btn">Dark Mode</button>
         <button class="nav-btn" onclick="logout()">Logout</button>
     </nav>
 
-    <!-- =============== MAIN CONTENT (LEFT ALIGNED) =============== -->
-    <main class="content-left">
+    <!-- ================= MAIN CONTENT ================= -->
+    <main class="content-left" id="contentArea">
         {% block content %}{% endblock %}
     </main>
 
@@ -33,7 +32,7 @@
         const role = localStorage.getItem("role");
         const nav = document.getElementById("navLinks");
 
-        /* ---------- USER NAVBAR ---------- */
+        /* USER NAV */
         if (role === "user") {
             nav.innerHTML = `
                 <li><a href="/user/dashboard">Dashboard</a></li>
@@ -43,7 +42,7 @@
             `;
         }
 
-        /* ---------- RECYCLER NAVBAR ---------- */
+        /* RECYCLER NAV */
         if (role === "recycler") {
             nav.innerHTML = `
                 <li><a href="/recycler/dashboard">Dashboard</a></li>
@@ -52,13 +51,13 @@
             `;
         }
 
-        /* ---------- ADMIN NAVBAR ---------- */
+        /* ADMIN NAV */
         if (role === "admin") {
             nav.innerHTML = `
                 <li><a href="/admin/dashboard">Dashboard</a></li>
-                <li><a href="/admin/users">Users</a></li>
-                <li><a href="/admin/recyclers">Recyclers</a></li>
-                <li><a href="/admin/requests">Requests</a></li>
+                <li><a href="/admin/users-page">Users</a></li>
+                <li><a href="/admin/recyclers-page">Recyclers</a></li>
+                <li><a href="/admin/requests-page">Requests</a></li>
             `;
         }
 
@@ -66,6 +65,31 @@
             localStorage.clear();
             window.location.href = "/auth/login";
         }
+
+        /* ================= DARK MODE LOGIC ================= */
+        const darkToggle = document.getElementById("darkToggle");
+
+        function applyDarkMode() {
+            const isDark = localStorage.getItem("darkMode") === "true";
+
+            document.body.classList.toggle("dark", isDark);
+            document.getElementById("navbar").classList.toggle("dark", isDark);
+            document.getElementById("contentArea").classList.toggle("dark", isDark);
+
+            let tables = document.querySelectorAll(".table");
+            tables.forEach(t => t.classList.toggle("dark", isDark));
+
+            darkToggle.innerText = isDark ? "Light Mode" : "Dark Mode";
+        }
+
+        darkToggle.addEventListener("click", () => {
+            const isDark = document.body.classList.contains("dark");
+            localStorage.setItem("darkMode", !isDark);
+            applyDarkMode();
+        });
+
+        // Apply on page load
+        applyDarkMode();
     </script>
 
 </body>

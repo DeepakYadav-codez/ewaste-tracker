@@ -1,112 +1,153 @@
 from flask import Blueprint, request, render_template
-from bson.objectid import ObjectId
+from bson import ObjectId
 from app import mongo
 from app.utils import jwt_required
+from app.services.email_service import send_email_html
 
 recycler_bp = Blueprint("recycler", __name__, url_prefix="/recycler")
 
 
-# ============================================================
-# PAGE ROUTES (NO TOKEN REQUIRED FOR LOADING HTML)
-# ============================================================
-
-# Recycler Dashboard Page
+# -------------------------
+# 1️⃣ RECYCLER DASHBOARD (HTML)
+# -------------------------
 @recycler_bp.route("/dashboard", methods=["GET"])
 def recycler_dashboard_page():
     return render_template("recycler_dashboard.html")
 
 
-# Pending Requests Page
+# -------------------------
+# 2️⃣ PENDING REQUESTS PAGE
+# -------------------------
 @recycler_bp.route("/pending", methods=["GET"])
-def recycler_pending_page():
+def pending_page():
     return render_template("recycler_pending.html")
 
 
-# Assigned Requests Page
+# -------------------------
+# 3️⃣ ASSIGNED REQUESTS PAGE
+# -------------------------
 @recycler_bp.route("/assigned", methods=["GET"])
-def recycler_assigned_page():
+def assigned_page():
     return render_template("recycler_assigned.html")
 
 
-# ============================================================
-# DATA API — ROLE: RECYCLER ONLY
-# ============================================================
-
-# -------- Pending Requests Data --------
+# -------------------------
+# 4️⃣ API – GET PENDING REQUESTS
+# -------------------------
 @recycler_bp.route("/pending-data", methods=["GET"])
 @jwt_required
 def pending_data():
+    recycler_id = request.user["user_id"]
 
-    if request.user["role"] != "recycler":
-        return {"error": "Unauthorized"}, 403
+    reqs = list(mongo.db.requests.find({
+        "recycler_id": recycler_id,
+        "status": "Assigned"
+    }))
 
-    pending = list(mongo.db.requests.find({"status": "Pending"}))
-
-    for r in pending:
+    for r in reqs:
         r["_id"] = str(r["_id"])
+        r["item_id"] = str(r["item_id"])
+        r["user_id"] = str(r["user_id"])
 
-    return {"pending": pending}, 200
+    return {"pending": reqs}, 200
 
 
-# -------- Assigned Requests Data --------
+# -------------------------
+# 5️⃣ API – GET ASSIGNED REQUESTS
+# -------------------------
 @recycler_bp.route("/assigned-data", methods=["GET"])
 @jwt_required
 def assigned_data():
-
-    if request.user["role"] != "recycler":
-        return {"error": "Unauthorized"}, 403
-
     recycler_id = request.user["user_id"]
 
-    assigned = list(mongo.db.requests.find({
-        "status": "Assigned",
-        "recycler_id": recycler_id
+    reqs = list(mongo.db.requests.find({
+        "recycler_id": recycler_id,
+        "status": "Accepted"
     }))
 
-    for r in assigned:
+    for r in reqs:
         r["_id"] = str(r["_id"])
+        r["item_id"] = str(r["item_id"])
+        r["user_id"] = str(r["user_id"])
 
-    return {"assigned": assigned}, 200
+    return {"assigned": reqs}, 200
 
 
-# ============================================================
-# ACTION ROUTES — ACCEPT REQUEST & COMPLETE REQUEST
-# ============================================================
-
-# -------- Accept Request --------
-@recycler_bp.route("/accept-request/<request_id>", methods=["PUT"])
+# -------------------------
+# 6️⃣ ACCEPT REQUEST
+# -------------------------
+@recycler_bp.route("/accept-request", methods=["POST"])
 @jwt_required
-def accept_request(request_id):
+def accept_request():
+    data = request.json
+    request_id = data.get("request_id")
 
-    if request.user["role"] != "recycler":
-        return {"error": "Unauthorized"}, 403
+    req = mongo.db.requests.find_one({"_id": ObjectId(request_id)})
+    if not req:
+        return {"error": "Request not found"}, 404
 
-    recycler_id = request.user["user_id"]
+    user = mongo.db.users.find_one({"_id": ObjectId(req["user_id"])})
+    item = mongo.db.items.find_one({"_id": ObjectId(req["item_id"])})
 
     mongo.db.requests.update_one(
         {"_id": ObjectId(request_id)},
-        {"$set": {
-            "status": "Assigned",
-            "recycler_id": recycler_id
-        }}
+        {"$set": {"status": "Accepted"}}
     )
 
-    return {"message": "Request Assigned Successfully"}, 200
+    send_email_html(
+        user["email"],
+        "Pickup Accepted",
+        "recycler_accept_email.html",
+        {
+            "user_name": user["name"],
+            "item_name": item["itemName"],
+            "date": req["date"],
+            "address": req["address"]
+        }
+    )
+
+    return {"message": "Request Accepted"}, 200
 
 
-# -------- Mark Request Completed --------
-@recycler_bp.route("/complete-request/<request_id>", methods=["PUT"])
+# -------------------------
+# 7️⃣ COMPLETE REQUEST
+# -------------------------
+@recycler_bp.route("/complete-request", methods=["POST"])
 @jwt_required
-def complete_request(request_id):
+def complete_request():
+    data = request.json
+    request_id = data.get("request_id")
 
-    if request.user["role"] != "recycler":
-        return {"error": "Unauthorized"}, 403
+    req = mongo.db.requests.find_one({"_id": ObjectId(request_id)})
+    if not req:
+        return {"error": "Request not found"}, 404
+
+    user = mongo.db.users.find_one({"_id": ObjectId(req["user_id"])})
+    item = mongo.db.items.find_one({"_id": ObjectId(req["item_id"])})
 
     mongo.db.requests.update_one(
         {"_id": ObjectId(request_id)},
-        {"$set": {
-            "status": "Completed"
-        }}
+        {"$set": {"status": "Completed"}}
     )
 
-    return {"message": "Request Marked Completed"}, 200
+    send_email_html(
+        user["email"],
+        "Pickup Completed",
+        "recycler_complete_email.html",
+        {
+            "user_name": user["name"],
+            "item_name": item["itemName"]
+        }
+    )
+
+    send_email_html(
+        "admin@gmail.com",
+        "Pickup Completed",
+        "recycler_complete_email.html",
+        {
+            "user_name": user["name"],
+            "item_name": item["itemName"]
+        }
+    )
+
+    return {"message": "Request Completed"}, 200

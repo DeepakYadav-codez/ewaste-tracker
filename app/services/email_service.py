@@ -1,29 +1,37 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from app.config import EMAIL_ADDRESS, EMAIL_PASSWORD
+from jinja2 import Environment, FileSystemLoader
+from app.config import Config
 
-# -----------------------------
-# SEND EMAIL FUNCTION
-# -----------------------------
-def send_email(to, subject, message):
+EMAIL_ADDRESS = Config.EMAIL_ADDRESS
+EMAIL_PASSWORD = Config.EMAIL_PASSWORD
+
+# Load templates from app/templates/emails folder
+env = Environment(loader=FileSystemLoader("app/templates/emails"))
+
+def send_email_html(to_email, subject, template_name, context):
     try:
-        msg = MIMEMultipart()
+        # Load template
+        template = env.get_template(template_name)
+        html_content = template.render(context)
+
+        msg = MIMEMultipart("alternative")
         msg["From"] = EMAIL_ADDRESS
-        msg["To"] = to
+        msg["To"] = to_email
         msg["Subject"] = subject
 
-        msg.attach(MIMEText(message, "html"))
+        msg.attach(MIMEText(html_content, "html"))
 
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_ADDRESS, to, msg.as_string())
+        server.sendmail(EMAIL_ADDRESS, to_email, msg.as_string())
         server.quit()
-
-        print("Email Sent to:", to)
+        print("sending to",to_email)
+        print("HTML Email sent successfully!")
         return True
 
     except Exception as e:
-        print("Email error:", str(e))
+        print("Error sending HTML email:", e)
         return False

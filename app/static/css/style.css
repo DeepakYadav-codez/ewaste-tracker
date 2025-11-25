@@ -186,3 +186,41 @@ body {
     display: flex;
     justify-content: space-between;
 }
+
+
+/* =========================
+   DARK MODE GLOBAL
+========================= */
+
+body.dark {
+    background: #121212;
+    color: #eaeaea;
+}
+
+nav.dark {
+    background: #1e1e1e;
+    border-bottom: 1px solid #333;
+}
+
+.content-left.dark {
+    background: #181818;
+}
+
+.table.dark {
+    background: #1b1b1b;
+    color: white;
+}
+
+.table.dark th,
+.table.dark td {
+    border-color: #444 !important;
+}
+
+.dark a {
+    color: #80bfff !important;
+}
+
+.dark-btn {
+    background: #333 !important;
+    color: white !important;
+}

@@ -2,25 +2,18 @@
 {% block title %}Assigned Requests{% endblock %}
 
 {% block content %}
-
-<h2 class="dashboard-header">Assigned Pickup Requests</h2>
+<h2>Assigned Requests</h2>
 
 <table class="table">
     <thead>
         <tr>
-            <th>Request ID</th>
-            <th>User ID</th>
             <th>Item ID</th>
             <th>Address</th>
             <th>Date</th>
-            <th>Status</th>
-            <th>Complete</th>
+            <th>Action</th>
         </tr>
     </thead>
-
-    <tbody id="assignedTable">
-        <!-- Data loads here -->
-    </tbody>
+    <tbody id="assignedTable"></tbody>
 </table>
 
 <script>
@@ -31,47 +24,41 @@ async function loadAssigned() {
         headers: { "Authorization": "Bearer " + token }
     });
 
-    const data = await res.json();
+    let data = await res.json();
 
     let rows = "";
-
     data.assigned.forEach(r => {
         rows += `
-        <tr>
-            <td>${r._id}</td>
-            <td>${r.user_id}</td>
-            <td>${r.item_id}</td>
-            <td>${r.address}</td>
-            <td>${r.date}</td>
-            <td>${r.status}</td>
-            <td>
-                <button class="btn eco-btn" onclick="completeRequest('${r._id}')">Done</button>
-            </td>
-        </tr>`;
+            <tr>
+                <td>${r.item_id}</td>
+                <td>${r.address}</td>
+                <td>${r.date}</td>
+                <td>
+                    <button onclick="complete('${r._id}')" class="btn">Complete</button>
+                </td>
+            </tr>
+        `;
     });
 
     document.getElementById("assignedTable").innerHTML = rows;
 }
 
-async function completeRequest(id) {
+async function complete(id) {
     const token = localStorage.getItem("token");
 
-    const res = await fetch(`/recycler/complete-request/${id}`, {
-        method: "PUT",
-        headers: { "Authorization": "Bearer " + token }
+    await fetch("/recycler/complete-request", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ request_id: id })
     });
 
-    const data = await res.json();
-
-    if (res.ok) {
-        alert("Marked Completed!");
-        window.location.reload();
-    } else {
-        alert(data.error);
-    }
+    alert("Completed!");
+    loadAssigned();
 }
 
 loadAssigned();
 </script>
-
 {% endblock %}

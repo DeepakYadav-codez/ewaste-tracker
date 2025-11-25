@@ -5,9 +5,10 @@ from app.utils import jwt_required
 from app.models.item_model import ItemModel
 from app.models.request_model import RequestModel
 from app.models.user_model import UserModel
-from app.services.email_service import send_email
+from app.services.email_service import send_email_html
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
+
 
 # ============================================================
 # USER DASHBOARD (HTML)
@@ -60,20 +61,19 @@ def add_item():
 
     mongo.db.items.insert_one(item)
 
-    # --------------------------------------
-    # SEND EMAIL TO USER
-    # --------------------------------------
+    # Fetch user
     user = mongo.db.users.find_one({"_id": ObjectId(request.user["user_id"])})
 
-    send_email(
+    # SEND EMAIL TO USER
+    send_email_html(
         user["email"],
-        "E-Waste Item Added",
-        f"""
-        <h2>Your Item Has Been Added</h2>
-        <p><b>Item:</b> {item['itemName']}</p>
-        <p><b>Category:</b> {item['category']}</p>
-        <p>Thank you for using E-Waste Tracker!</p>
-        """
+        "E-Waste Item Added Successfully",
+        "item_added.html",
+        {
+            "user_name": user["name"],
+            "item_name": item["itemName"],
+            "category": item["category"]
+        }
     )
 
     return {"message": "Item added successfully"}, 201
@@ -106,18 +106,19 @@ def request_pickup():
 
     mongo.db.requests.insert_one(req)
 
+    # Fetch user
     user = mongo.db.users.find_one({"_id": ObjectId(request.user["user_id"])})
 
-    # EMAIL TRIGGER
-    send_email(
+    # SEND EMAIL TO USER
+    send_email_html(
         user["email"],
         "Pickup Request Submitted",
-        f"""
-        <h2>Your Pickup Request is Submitted</h2>
-        <p><b>Date:</b> {req['date']}</p>
-        <p><b>Address:</b> {req['address']}</p>
-        <p>We will assign a recycler soon.</p>
-        """
+        "pickup_request.html",
+        {
+            "user_name": user["name"],
+            "address": req["address"],
+            "date": req["date"]
+        }
     )
 
     return {"message": "Pickup request submitted"}, 201
@@ -144,7 +145,7 @@ def my_items():
 
 
 # ============================================================
-# VIEW REQUESTS PAGE
+# VIEW REQUESTS PAGE (HTML)
 # ============================================================
 @user_bp.route("/my-requests-page", methods=["GET"])
 def my_requests_page():
@@ -164,7 +165,7 @@ def my_requests():
 
 
 # ============================================================
-# FEEDBACK PAGE
+# FEEDBACK PAGE (HTML)
 # ============================================================
 @user_bp.route("/feedback-page", methods=["GET"])
 def feedback_page():

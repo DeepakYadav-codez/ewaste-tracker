@@ -1,8 +1,10 @@
-from flask import render_template, Blueprint, request
+from flask import Blueprint, request, render_template
 from bson.objectid import ObjectId
 from app import mongo
-from app.utils import jwt_required, send_email   # ⬅ EMAIL IMPORT ADDED
+from app.utils import jwt_required
+from app.services.email_service import send_email_html
 
+# ✅ Define Blueprint FIRST (VERY IMPORTANT)
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
@@ -40,15 +42,13 @@ def admin_assign_page():
     return render_template("admin_assign_recycler.html")
 
 
-
 # ============================================================
-# ADMIN ONLY CHECK
+# ADMIN CHECK
 # ============================================================
 
 def admin_only():
     if request.user["role"] != "admin":
         return {"error": "Unauthorized - Admin access only"}, 403
-
 
 
 # ============================================================
@@ -58,7 +58,6 @@ def admin_only():
 @admin_bp.route("/dashboard-data", methods=["GET"])
 @jwt_required
 def admin_dashboard_data():
-
     unauthorized = admin_only()
     if unauthorized:
         return unauthorized
@@ -78,15 +77,13 @@ def admin_dashboard_data():
     }, 200
 
 
-
 # ============================================================
-# GET USERS (ALL NORMAL USERS)
+# USERS LIST
 # ============================================================
 
 @admin_bp.route("/users", methods=["GET"])
 @jwt_required
 def get_users():
-
     unauthorized = admin_only()
     if unauthorized:
         return unauthorized
@@ -98,15 +95,13 @@ def get_users():
     return {"users": users}, 200
 
 
-
 # ============================================================
-# GET RECYCLERS
+# RECYCLERS LIST
 # ============================================================
 
 @admin_bp.route("/recyclers", methods=["GET"])
 @jwt_required
 def get_recyclers():
-
     unauthorized = admin_only()
     if unauthorized:
         return unauthorized
@@ -118,7 +113,6 @@ def get_recyclers():
     return {"recyclers": recyclers}, 200
 
 
-
 # ============================================================
 # ADD RECYCLER
 # ============================================================
@@ -126,7 +120,6 @@ def get_recyclers():
 @admin_bp.route("/add-recycler", methods=["POST"])
 @jwt_required
 def add_recycler():
-
     unauthorized = admin_only()
     if unauthorized:
         return unauthorized
@@ -142,12 +135,11 @@ def add_recycler():
     mongo.db.users.insert_one({
         "name": name,
         "email": email,
-        "password": password,
+        "password": password,  # you can hash password here if needed
         "role": "recycler"
     })
 
     return {"message": "Recycler added successfully"}, 201
-
 
 
 # ============================================================
@@ -157,7 +149,6 @@ def add_recycler():
 @admin_bp.route("/requests", methods=["GET"])
 @jwt_required
 def get_requests():
-
     unauthorized = admin_only()
     if unauthorized:
         return unauthorized
@@ -169,15 +160,13 @@ def get_requests():
     return {"requests": reqs}, 200
 
 
-
 # ============================================================
-# VIEW FEEDBACK
+# FEEDBACK
 # ============================================================
 
 @admin_bp.route("/feedback", methods=["GET"])
 @jwt_required
 def view_feedback():
-
     unauthorized = admin_only()
     if unauthorized:
         return unauthorized
@@ -189,42 +178,45 @@ def view_feedback():
     return {"feedbacks": feedbacks}, 200
 
 
-
 # ============================================================
-# ASSIGN RECYCLER + SEND EMAIL NOTIFICATION
+# ASSIGN RECYCLER → SEND EMAIL TO RECYCLER
 # ============================================================
 
 @admin_bp.route("/assign-recycler", methods=["POST"])
 @jwt_required
 def assign_recycler():
-    if request.user["role"] != "admin":
-        return {"error": "Unauthorized"}, 403
+    unauthorized = admin_only()
+    if unauthorized:
+        return unauthorized
 
     data = request.json
     request_id = data.get("request_id")
     recycler_id = data.get("recycler_id")
 
-    # Update DB
+    # Get data
+    req = mongo.db.requests.find_one({"_id": ObjectId(request_id)})
+    recycler = mongo.db.users.find_one({"_id": ObjectId(recycler_id)})
+    user = mongo.db.users.find_one({"_id": ObjectId(req["user_id"])})
+    item = mongo.db.items.find_one({"_id": ObjectId(req["item_id"])})
+
+    # Update request
     mongo.db.requests.update_one(
         {"_id": ObjectId(request_id)},
         {"$set": {"recycler_id": recycler_id, "status": "Assigned"}}
     )
 
-    # Fetch recycler info
-    recycler = mongo.db.users.find_one({"_id": ObjectId(recycler_id)})
+    # EMAIL TO RECYCLER
+    send_email_html(
+        recycler["email"],
+        "New Pickup Assigned",
+        "assigned_recycler.html",
+        {
+            "recycler_name": recycler["name"],
+            "user_name": user["name"],
+            "item_name": item["itemName"],
+            "address": req["address"],
+            "date": req["date"]
+        }
+    )
 
-    if recycler:
-        # Send email
-        send_email(
-            to=recycler["email"],
-            subject="New Pickup Assignment",
-            body=(
-                f"Hello {recycler['name']},\n\n"
-                f"You have been assigned a new pickup request.\n"
-                f"Please check your Recycler Dashboard.\n\n"
-                f"Regards,\nE-Waste Tracker"
-            )
-        )
-
-    return {"message": "Recycler Assigned Successfully"}, 200
-
+    return {"message": "Recycler Assigned & Email Sent"}, 200
