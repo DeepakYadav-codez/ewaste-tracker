@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import render_template
 from flask_pymongo import PyMongo
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -36,6 +37,6 @@ def create_app():
     # Home route
     @app.route("/")
     def home():
-        return "E-Waste Tracker App Running Successfully!"
+        return render_template("index.html")
 
     return app
